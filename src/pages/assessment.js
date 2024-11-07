@@ -8,8 +8,8 @@ const Assessment = () => {
   const [selectedJob, setSelectedJob] = useState('');
   const [questions, setQuestions] = useLocalStorage('assessment-questions', []);
   const [jobs] = useLocalStorage('jobs', [
-    { id: 1, title: 'Software Engineer' },
-    { id: 2, title: 'Product Manager' }
+    { id: 1, title: 'Software Engineer', isRecent: true },
+    { id: 2, title: 'Product Manager', isRecent: false }
   ]);
   const [currentQuestion, setCurrentQuestion] = useState({
     question: '',
@@ -46,7 +46,7 @@ const Assessment = () => {
   return (
     <div style={{
       padding: '20px',
-      backgroundColor: '#0A1931',
+      backgroundColor: '#1A202C',
       minHeight: '100vh'
     }}>
       {/* Header Section */}
@@ -71,23 +71,24 @@ const Assessment = () => {
           onClick={() => navigate('/employee')}
           style={{
             padding: '10px 20px',
-            backgroundColor: '#5C8999',
-            color: '#F5F5DC',
+            backgroundColor: '#3B82F6',
+            color: '#FFFFFF',
             border: 'none',
             borderRadius: '5px',
             cursor: 'pointer',
             position: 'absolute',
             right: '20px',
             top: '10px',
+            transition: 'background-color 0.3s',
             '&:hover': {
-              backgroundColor: '#4A6F7C'
+              backgroundColor: '#2563EB'
             }
           }}
         >
           Back to Jobs
         </button>
 
-        {/* Updated Job Selection Dropdown */}
+        {/* Job Selection Dropdown */}
         <select
           value={selectedJob}
           onChange={(e) => setSelectedJob(e.target.value)}
@@ -96,8 +97,8 @@ const Assessment = () => {
             borderRadius: '5px',
             width: '400px',
             fontSize: '1.1rem',
-            border: '1px solid #FFFFFF',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid #4B5563',
+            backgroundColor: '#374151',
             color: '#FFFFFF',
             cursor: 'pointer'
           }}
@@ -106,11 +107,24 @@ const Assessment = () => {
           
           {/* Recently Added Jobs Group */}
           {jobs.filter(job => job.isRecent).length > 0 && (
-            <optgroup label="Recently Added Jobs">
+            <optgroup 
+              label="Recently Added Jobs"
+              style={{
+                backgroundColor: '#2D3748',
+                color: '#FFFFFF'
+              }}
+            >
               {jobs
                 .filter(job => job.isRecent)
                 .map(job => (
-                  <option key={`recent-${job.id}`} value={job.id}>
+                  <option 
+                    key={`recent-${job.id}`} 
+                    value={job.id}
+                    style={{
+                      backgroundColor: '#374151',
+                      color: '#FFFFFF'
+                    }}
+                  >
                     {job.title}
                   </option>
                 ))
@@ -119,9 +133,22 @@ const Assessment = () => {
           )}
           
           {/* All Jobs Group */}
-          <optgroup label="All Jobs">
+          <optgroup 
+            label="All Jobs"
+            style={{
+              backgroundColor: '#2D3748',
+              color: '#FFFFFF'
+            }}
+          >
             {jobs.map(job => (
-              <option key={`all-${job.id}`} value={job.id}>
+              <option 
+                key={`all-${job.id}`} 
+                value={job.id}
+                style={{
+                  backgroundColor: '#374151',
+                  color: '#FFFFFF'
+                }}
+              >
                 {job.title}
               </option>
             ))}
@@ -136,7 +163,7 @@ const Assessment = () => {
         }}>
           {/* Question Creation Form */}
           <div style={{
-            backgroundColor: '#F5F5DC',
+            backgroundColor: '#2D3748',
             padding: '30px',
             borderRadius: '15px',
             marginBottom: '30px',
@@ -144,7 +171,7 @@ const Assessment = () => {
           }}>
             <h2 style={{ 
               marginBottom: '20px',
-              color: '#333333'
+              color: '#FFFFFF'
             }}>
               Add New Question
             </h2>
@@ -162,10 +189,13 @@ const Assessment = () => {
                   padding: '12px',
                   marginBottom: '20px',
                   borderRadius: '5px',
-                  border: '1px solid #ddd',
+                  border: '1px solid #4B5563',
+                  backgroundColor: '#374151',
+                  color: '#FFFFFF',
                   fontSize: '1rem'
                 }}
               />
+
               {currentQuestion.options.map((option, index) => (
                 <div key={index} style={{ 
                   marginBottom: '15px', 
@@ -188,7 +218,9 @@ const Assessment = () => {
                       flex: 1,
                       padding: '10px',
                       borderRadius: '5px',
-                      border: '1px solid #ddd'
+                      border: '1px solid #4B5563',
+                      backgroundColor: '#374151',
+                      color: '#FFFFFF'
                     }}
                   />
                   <input
@@ -206,14 +238,15 @@ const Assessment = () => {
                 onClick={handleAddQuestion}
                 style={{
                   padding: '10px 20px',
-                  backgroundColor: '#5C8999',
-                  color: '#F5F5DC',
+                  backgroundColor: '#3B82F6',
+                  color: '#FFFFFF',
                   border: 'none',
                   borderRadius: '5px',
                   cursor: 'pointer',
                   marginTop: '10px',
+                  transition: 'background-color 0.3s',
                   '&:hover': {
-                    backgroundColor: '#4A6F7C'
+                    backgroundColor: '#2563EB'
                   }
                 }}
               >
@@ -224,16 +257,16 @@ const Assessment = () => {
 
           {/* Questions List */}
           <div>
-            <h2 style={{ color: '#FFFFFF' }}>Questions List</h2>
+            <h2 style={{ color: '#FFFFFF', marginBottom: '20px' }}>Questions List</h2>
             {questions.map((question, index) => (
               <div
                 key={question.id}
                 style={{
-                  backgroundColor: '#F5F5DC',
+                  backgroundColor: '#2D3748',
                   padding: '20px',
                   borderRadius: '15px',
                   marginBottom: '10px',
-                  color: '#333333'
+                  color: '#FFFFFF'
                 }}
               >
                 <h3>Question {index + 1}</h3>
@@ -244,6 +277,9 @@ const Assessment = () => {
                       key={optIndex}
                       style={{
                         padding: '5px',
+                        backgroundColor: '#374151',
+                        margin: '5px 0',
+                        borderRadius: '5px'
                       }}
                     >
                       {option}
@@ -255,11 +291,15 @@ const Assessment = () => {
                     onClick={() => handleEditQuestion(question.id)}
                     style={{
                       padding: '5px 10px',
-                      backgroundColor: '#006400',
-                      color: '#F5F5DC',
+                      backgroundColor: '#3B82F6',
+                      color: '#FFFFFF',
                       border: 'none',
                       borderRadius: '5px',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'background-color 0.3s',
+                      '&:hover': {
+                        backgroundColor: '#2563EB'
+                      }
                     }}
                   >
                     Edit
@@ -268,11 +308,15 @@ const Assessment = () => {
                     onClick={() => handleDeleteQuestion(question.id)}
                     style={{
                       padding: '5px 10px',
-                      backgroundColor: '#800000',
-                      color: '#F5F5DC',
+                      backgroundColor: '#EF4444',
+                      color: '#FFFFFF',
                       border: 'none',
                       borderRadius: '5px',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'background-color 0.3s',
+                      '&:hover': {
+                        backgroundColor: '#DC2626'
+                      }
                     }}
                   >
                     Delete
