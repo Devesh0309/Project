@@ -140,19 +140,21 @@ const Employee = () => {
     return Array.from({ length: count }, (_, index) => ({
       id: index + 1,
       name: `Candidate ${index + 1}`,
-      resumeLink: `https://resume.com/candidate${index + 1}`,
-      applicationDate: getRandomDate(),
-      status: getRandomStatus(),
       email: `candidate${index + 1}@example.com`,
       phone: `+1 (555) ${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
       skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'].slice(0, Math.floor(Math.random() * 3) + 2),
       experience: `${Math.floor(Math.random() * 8) + 2} years`,
-      education: 'Bachelor in Computer Science'
+      education: 'Bachelor in Computer Science',
+      resumeLink: `https://resume.com/candidate${index + 1}`,
+      applicationDate: new Date().toLocaleDateString(),
+      status: 'Under Review'
     }));
   };
 
   const [selectedJob, setSelectedJob] = useState(null);
-  const [jobs, setJobs] = useLocalStorage('jobs', [
+
+  // Modify the initial jobs data
+  const initialJobs = [
     { 
       id: 1, 
       title: 'Software Engineer', 
@@ -174,13 +176,17 @@ const Employee = () => {
       candidates: 10,
       candidateList: generateCandidates(10)
     }
-  ]);
+  ];
+
+  // Modify the useLocalStorage hook usage
+  const [jobs, setJobs] = useLocalStorage('jobs', initialJobs);
 
   const [newJob, setNewJob] = useState({ title: '', description: '' });
   const [editingId, setEditingId] = useState(null);
 
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
+  // Update the handleStatusUpdate function
   const handleStatusUpdate = (candidateId, newStatus) => {
     setJobs(prevJobs => {
       const updatedJobs = prevJobs.map(job => {
@@ -206,7 +212,7 @@ const Employee = () => {
       return updatedJobs;
     });
 
-    // Update selectedJob to reflect changes immediately in the table
+    // Update selectedJob
     setSelectedJob(prev => ({
       ...prev,
       candidateList: prev.candidateList.map(candidate => {
@@ -219,19 +225,13 @@ const Employee = () => {
         return candidate;
       })
     }));
-
-    // Update selectedCandidate to reflect changes in the modal
-    if (selectedCandidate && selectedCandidate.id === candidateId) {
-      setSelectedCandidate(prev => ({
-        ...prev,
-        status: newStatus
-      }));
-    }
   };
 
   // Candidate Details Modal
   const CandidateModal = ({ candidate, onClose, onStatusUpdate }) => {
     const [status, setStatus] = useState(candidate?.status || 'Under Review');
+
+    console.log('Candidate data in modal:', candidate);
 
     const handleStatusChange = (newStatus) => {
       setStatus(newStatus);
@@ -291,23 +291,36 @@ const Employee = () => {
             }}>
               <h3 style={{ color: '#FFFFFF', marginBottom: '15px' }}>Personal Information</h3>
               <div style={{ color: '#FFFFFF' }}>
-                <p style={{ marginBottom: '10px' }}><strong>Name:</strong> {candidate.name}</p>
-                <p style={{ marginBottom: '10px' }}><strong>Email:</strong> {candidate.email}</p>
-                <p style={{ marginBottom: '10px' }}><strong>Phone:</strong> {candidate.phone}</p>
-                <p style={{ marginBottom: '10px' }}><strong>Experience:</strong> {candidate.experience}</p>
-                <p style={{ marginBottom: '15px' }}><strong>Education:</strong> {candidate.education}</p>
+                <p style={{ marginBottom: '10px' }}>
+                  <strong>Name:</strong> <span style={{ marginLeft: '8px' }}>{candidate.name}</span>
+                </p>
+                <p style={{ marginBottom: '10px' }}>
+                  <strong>Email:</strong> <span style={{ marginLeft: '8px' }}>{candidate.email}</span>
+                </p>
+                <p style={{ marginBottom: '10px' }}>
+                  <strong>Phone:</strong> <span style={{ marginLeft: '8px' }}>{candidate.phone}</span>
+                </p>
+                <p style={{ marginBottom: '10px' }}>
+                  <strong>Experience:</strong> <span style={{ marginLeft: '8px' }}>{candidate.experience}</span>
+                </p>
+                <p style={{ marginBottom: '15px' }}>
+                  <strong>Education:</strong> <span style={{ marginLeft: '8px' }}>{candidate.education}</span>
+                </p>
               </div>
               
               <h3 style={{ color: '#FFFFFF', marginBottom: '15px', marginTop: '20px' }}>Skills</h3>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {(candidate.skills || []).map((skill, index) => (
-                  <span key={index} style={{
-                    backgroundColor: '#3B82F6',
-                    padding: '5px 10px',
-                    borderRadius: '15px',
-                    fontSize: '0.9em',
-                    color: '#FFFFFF'
-                  }}>
+                  <span 
+                    key={index} 
+                    style={{
+                      backgroundColor: '#3B82F6',
+                      padding: '5px 10px',
+                      borderRadius: '15px',
+                      fontSize: '0.9em',
+                      color: '#FFFFFF'
+                    }}
+                  >
                     {skill}
                   </span>
                 ))}
@@ -439,6 +452,40 @@ const Employee = () => {
     localStorage.setItem('jobs', JSON.stringify(jobs));
   }, [jobs]);
 
+  // Add this useEffect to ensure data persistence
+  useEffect(() => {
+    const storedJobs = localStorage.getItem('jobs');
+    if (!storedJobs) {
+      localStorage.setItem('jobs', JSON.stringify(initialJobs));
+      setJobs(initialJobs);
+    } else {
+      try {
+        const parsedJobs = JSON.parse(storedJobs);
+        // Ensure each job has candidateList with all required fields
+        const validatedJobs = parsedJobs.map(job => ({
+          ...job,
+          candidateList: job.candidateList?.map(candidate => ({
+            id: candidate.id,
+            name: candidate.name || `Candidate ${candidate.id}`,
+            email: candidate.email || `candidate${candidate.id}@example.com`,
+            phone: candidate.phone || `+1 (555) ${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+            skills: candidate.skills || ['JavaScript', 'React', 'Node.js'].slice(0, Math.floor(Math.random() * 3) + 2),
+            experience: candidate.experience || `${Math.floor(Math.random() * 8) + 2} years`,
+            education: candidate.education || 'Bachelor in Computer Science',
+            resumeLink: candidate.resumeLink || `https://resume.com/candidate${candidate.id}`,
+            applicationDate: candidate.applicationDate || new Date().toLocaleDateString(),
+            status: candidate.status || 'Under Review'
+          })) || generateCandidates(job.candidates || 0)
+        }));
+        setJobs(validatedJobs);
+      } catch (error) {
+        console.error('Error parsing stored jobs:', error);
+        localStorage.setItem('jobs', JSON.stringify(initialJobs));
+        setJobs(initialJobs);
+      }
+    }
+  }, []);
+
   const [animate, setAnimate] = useState({
     header: false,
     form: false,
@@ -562,7 +609,10 @@ const Employee = () => {
                     }}
                   >
                     <TableCell 
-                      onClick={() => setSelectedCandidate(candidate)}
+                      onClick={() => {
+                        console.log('Clicking candidate:', candidate);
+                        setSelectedCandidate(candidate);
+                      }}
                       sx={{
                         color: '#FFFFFF',
                         borderColor: '#4A5568',
