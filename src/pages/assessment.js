@@ -1,53 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import useLocalStorage from '../hooks/useLocalStorage';
 
 const Assessment = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [selectedJob, setSelectedJob] = useState('');
-  const [questions, setQuestions] = useState([]);
-  const [allJobs, setAllJobs] = useState([]);
+  const [questions, setQuestions] = useLocalStorage('assessment-questions', []);
+  const [jobs] = useLocalStorage('jobs', [
+    { id: 1, title: 'Software Engineer' },
+    { id: 2, title: 'Product Manager' }
+  ]);
   const [currentQuestion, setCurrentQuestion] = useState({
     question: '',
     options: ['', '', '', ''],
     correctAnswer: 0
   });
 
-  // Updated useEffect to listen for localStorage changes
-  useEffect(() => {
-    // Function to load jobs
-    const loadJobs = () => {
-      const storedJobs = JSON.parse(localStorage.getItem('jobs') || '[]');
-      
-      // Filter out sample jobs if they exist in stored jobs
-      const sampleJobs = [
-        { id: 1, title: 'Software Engineer' },
-        { id: 2, title: 'Product Manager' }
-      ].filter(sampleJob => 
-        !storedJobs.some(storedJob => storedJob.id === sampleJob.id)
-      );
-
-      // Combine and set jobs
-      const combinedJobs = [...sampleJobs, ...storedJobs];
-      setAllJobs(combinedJobs);
-    };
-
-    // Load jobs initially
-    loadJobs();
-
-    // Add event listener for storage changes
-    window.addEventListener('storage', loadJobs);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('storage', loadJobs);
-    };
-  }, []);
-
   // Debug log to verify jobs are being loaded
   useEffect(() => {
-    console.log('Current jobs in Assessment:', allJobs);
-  }, [allJobs]);
+    console.log('Current jobs in Assessment:', jobs);
+  }, [jobs]);
 
   const handleAddQuestion = () => {
     if (currentQuestion.question && currentQuestion.options.every(opt => opt !== '')) {
@@ -132,9 +105,9 @@ const Assessment = () => {
           <option value="">Select a Job Position</option>
           
           {/* Recently Added Jobs Group */}
-          {allJobs.filter(job => job.isRecent).length > 0 && (
+          {jobs.filter(job => job.isRecent).length > 0 && (
             <optgroup label="Recently Added Jobs">
-              {allJobs
+              {jobs
                 .filter(job => job.isRecent)
                 .map(job => (
                   <option key={`recent-${job.id}`} value={job.id}>
@@ -147,7 +120,7 @@ const Assessment = () => {
           
           {/* All Jobs Group */}
           <optgroup label="All Jobs">
-            {allJobs.map(job => (
+            {jobs.map(job => (
               <option key={`all-${job.id}`} value={job.id}>
                 {job.title}
               </option>

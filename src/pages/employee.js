@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage';
 import { useNavigate } from 'react-router-dom';
 import { 
   Card, 
@@ -24,10 +25,7 @@ const fadeIn = {
 };
 
 const EditModal = ({ job, onClose, onUpdate }) => {
-  const [editedJob, setEditedJob] = useState({
-    title: job.title,
-    description: job.description
-  });
+  const [editedJob, setEditedJob] = useState(job);
 
   return (
     <div style={{
@@ -43,13 +41,13 @@ const EditModal = ({ job, onClose, onUpdate }) => {
       zIndex: 1000
     }}>
       <div style={{
-        backgroundColor: '#F5F5DC',
+        backgroundColor: '#2D3748',
         padding: '30px',
         borderRadius: '15px',
         width: '500px',
         maxWidth: '90%'
       }}>
-        <h2 style={{ color: '#333333', marginBottom: '20px' }}>Edit Job</h2>
+        <h2 style={{ color: '#FFFFFF', marginBottom: '20px' }}>Edit Job</h2>
         
         <input
           type="text"
@@ -61,8 +59,9 @@ const EditModal = ({ job, onClose, onUpdate }) => {
             padding: '10px',
             marginBottom: '15px',
             borderRadius: '5px',
-            border: '1px solid #ccc',
-            backgroundColor: '#FFFFFF'
+            border: '1px solid #4B5563',
+            backgroundColor: '#374151',
+            color: '#FFFFFF'
           }}
         />
         
@@ -75,9 +74,10 @@ const EditModal = ({ job, onClose, onUpdate }) => {
             padding: '10px',
             marginBottom: '20px',
             borderRadius: '5px',
-            border: '1px solid #ccc',
-            backgroundColor: '#FFFFFF',
-            minHeight: '100px'
+            border: '1px solid #4B5563',
+            backgroundColor: '#374151',
+            minHeight: '100px',
+            color: '#FFFFFF'
           }}
         />
         
@@ -117,6 +117,11 @@ const EditModal = ({ job, onClose, onUpdate }) => {
 const Employee = () => {
   const navigate = useNavigate();
 
+  // Add this useEffect at the top of your component
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []); // Empty dependency array means this runs once when component mounts
+
   // Function to generate random date within last 30 days
   const getRandomDate = () => {
     const date = new Date();
@@ -137,82 +142,106 @@ const Employee = () => {
       name: `Candidate ${index + 1}`,
       resumeLink: `https://resume.com/candidate${index + 1}`,
       applicationDate: getRandomDate(),
-      status: getRandomStatus()
+      status: getRandomStatus(),
+      email: `candidate${index + 1}@example.com`,
+      phone: `+1 (555) ${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+      skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'].slice(0, Math.floor(Math.random() * 3) + 2),
+      experience: `${Math.floor(Math.random() * 8) + 2} years`,
+      education: 'Bachelor in Computer Science'
     }));
   };
 
   const [selectedJob, setSelectedJob] = useState(null);
-  const [jobs, setJobs] = useState(() => {
-    const storedJobs = JSON.parse(localStorage.getItem('jobs') || '[]');
-    
-    // If no stored jobs, use default jobs
-    if (storedJobs.length === 0) {
-      const defaultJobs = [
-        { 
-          id: 1, 
-          title: 'Software Engineer', 
-          description: 'Full Stack Developer with React experience', 
-          candidates: 14,
-          candidateList: generateCandidates(14)
-        },
-        { 
-          id: 2, 
-          title: 'Product Manager', 
-          description: 'Lead product development and strategy', 
-          candidates: 8,
-          candidateList: generateCandidates(8)
-        },
-        { 
-          id: 3, 
-          title: 'UX/UI Designer', 
-          description: 'Design intuitive user interfaces and experiences', 
-          candidates: 10,
-          candidateList: generateCandidates(10)
-        }
-      ];
-      localStorage.setItem('jobs', JSON.stringify(defaultJobs));
-      return defaultJobs;
+  const [jobs, setJobs] = useLocalStorage('jobs', [
+    { 
+      id: 1, 
+      title: 'Software Engineer', 
+      description: 'Full Stack Developer with React experience', 
+      candidates: 14,
+      candidateList: generateCandidates(14)
+    },
+    { 
+      id: 2, 
+      title: 'Product Manager', 
+      description: 'Lead product development and strategy', 
+      candidates: 8,
+      candidateList: generateCandidates(8)
+    },
+    { 
+      id: 3, 
+      title: 'UX/UI Designer', 
+      description: 'Design intuitive user interfaces and experiences', 
+      candidates: 10,
+      candidateList: generateCandidates(10)
     }
-    
-    return storedJobs;
-  });
+  ]);
 
   const [newJob, setNewJob] = useState({ title: '', description: '' });
   const [editingId, setEditingId] = useState(null);
 
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
-  // Function to generate random candidate details
-  const generateCandidateDetails = (basicInfo) => ({
-    ...basicInfo,
-    email: `candidate${basicInfo.id}@example.com`,
-    phone: `+1 (555) ${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-    skills: ['JavaScript', 'React', 'Node.js', 'Python', 'SQL'].slice(0, Math.floor(Math.random() * 3) + 2),
-    experience: `${Math.floor(Math.random() * 8) + 2} years`,
-    education: 'Bachelor in Computer Science',
-    currentStatus: basicInfo.status
-  });
+  const handleStatusUpdate = (candidateId, newStatus) => {
+    setJobs(prevJobs => {
+      const updatedJobs = prevJobs.map(job => {
+        if (job.id === selectedJob.id) {
+          return {
+            ...job,
+            candidateList: job.candidateList.map(candidate => {
+              if (candidate.id === candidateId) {
+                return {
+                  ...candidate,
+                  status: newStatus
+                };
+              }
+              return candidate;
+            })
+          };
+        }
+        return job;
+      });
+      
+      // Update localStorage
+      localStorage.setItem('jobs', JSON.stringify(updatedJobs));
+      return updatedJobs;
+    });
 
-  // Function to handle status update
-  const handleStatusUpdate = (newStatus) => {
-    if (selectedCandidate) {
-      const updatedJobs = jobs.map(job => ({
-        ...job,
-        candidateList: job.candidateList.map(candidate => 
-          candidate.id === selectedCandidate.id 
-            ? { ...candidate, status: newStatus }
-            : candidate
-        )
+    // Update selectedJob to reflect changes immediately in the table
+    setSelectedJob(prev => ({
+      ...prev,
+      candidateList: prev.candidateList.map(candidate => {
+        if (candidate.id === candidateId) {
+          return {
+            ...candidate,
+            status: newStatus
+          };
+        }
+        return candidate;
+      })
+    }));
+
+    // Update selectedCandidate to reflect changes in the modal
+    if (selectedCandidate && selectedCandidate.id === candidateId) {
+      setSelectedCandidate(prev => ({
+        ...prev,
+        status: newStatus
       }));
-      setJobs(updatedJobs);
-      setSelectedCandidate({ ...selectedCandidate, status: newStatus });
     }
   };
 
   // Candidate Details Modal
-  const CandidateModal = ({ candidate, onClose }) => {
-    const details = generateCandidateDetails(candidate);
-    
+  const CandidateModal = ({ candidate, onClose, onStatusUpdate }) => {
+    const [status, setStatus] = useState(candidate?.status || 'Under Review');
+
+    const handleStatusChange = (newStatus) => {
+      setStatus(newStatus);
+      onStatusUpdate(candidate.id, newStatus);
+    };
+
+    if (!candidate) {
+      return null;
+    }
+
     return (
       <div style={{
         position: 'fixed',
@@ -227,29 +256,25 @@ const Employee = () => {
         zIndex: 1000
       }}>
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: '#2D3748',
           padding: '30px',
           borderRadius: '10px',
           width: '80%',
           maxWidth: '800px',
           maxHeight: '90vh',
-          overflow: 'auto',
-          color: '#333333'
+          overflow: 'auto'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h2 style={{ margin: 0, color: '#333333' }}>Candidate Details</h2>
+            <h2 style={{ margin: 0, color: '#FFFFFF' }}>Candidate Details</h2>
             <button 
               onClick={onClose}
               style={{
                 padding: '5px 10px',
-                backgroundColor: '#5C8999',
-                color: '#F5F5DC',
+                backgroundColor: '#EF4444',
+                color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '5px',
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: '#4A6F7C'
-                }
+                cursor: 'pointer'
               }}
             >
               Close
@@ -257,28 +282,31 @@ const Employee = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            {/* Personal Information Section */}
             <div style={{ 
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#374151',
               padding: '20px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <h3 style={{ color: '#333333' }}>Personal Information</h3>
-              <p><strong style={{ color: '#333333' }}>Name:</strong> {details.name}</p>
-              <p><strong style={{ color: '#333333' }}>Email:</strong> {details.email}</p>
-              <p><strong style={{ color: '#333333' }}>Phone:</strong> {details.phone}</p>
-              <p><strong style={{ color: '#333333' }}>Experience:</strong> {details.experience}</p>
-              <p><strong style={{ color: '#333333' }}>Education:</strong> {details.education}</p>
+              <h3 style={{ color: '#FFFFFF', marginBottom: '15px' }}>Personal Information</h3>
+              <div style={{ color: '#FFFFFF' }}>
+                <p style={{ marginBottom: '10px' }}><strong>Name:</strong> {candidate.name}</p>
+                <p style={{ marginBottom: '10px' }}><strong>Email:</strong> {candidate.email}</p>
+                <p style={{ marginBottom: '10px' }}><strong>Phone:</strong> {candidate.phone}</p>
+                <p style={{ marginBottom: '10px' }}><strong>Experience:</strong> {candidate.experience}</p>
+                <p style={{ marginBottom: '15px' }}><strong>Education:</strong> {candidate.education}</p>
+              </div>
               
-              <h3 style={{ color: '#333333' }}>Skills</h3>
+              <h3 style={{ color: '#FFFFFF', marginBottom: '15px', marginTop: '20px' }}>Skills</h3>
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                {details.skills.map((skill, index) => (
+                {(candidate.skills || []).map((skill, index) => (
                   <span key={index} style={{
-                    backgroundColor: '#E5E5E5',
+                    backgroundColor: '#3B82F6',
                     padding: '5px 10px',
                     borderRadius: '15px',
                     fontSize: '0.9em',
-                    color: '#333333'
+                    color: '#FFFFFF'
                   }}>
                     {skill}
                   </span>
@@ -286,41 +314,44 @@ const Employee = () => {
               </div>
             </div>
 
+            {/* Application Status Section */}
             <div style={{ 
-              backgroundColor: '#FFFFFF',
+              backgroundColor: '#374151',
               padding: '20px',
               borderRadius: '8px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}>
-              <h3 style={{ color: '#333333' }}>Application Status</h3>
+              <h3 style={{ color: '#FFFFFF', marginBottom: '15px' }}>Application Status</h3>
               <div style={{ marginBottom: '20px' }}>
                 <select
-                  value={details.status}
-                  onChange={(e) => handleStatusUpdate(e.target.value)}
+                  value={status}
+                  onChange={(e) => handleStatusChange(e.target.value)}
                   style={{
                     padding: '8px',
                     borderRadius: '5px',
                     width: '200px',
-                    backgroundColor: '#E5E5E5',
-                    border: '1px solid #ccc',
-                    color: '#333333'
+                    backgroundColor: '#2D3748',
+                    border: '1px solid #4B5563',
+                    color: '#FFFFFF'
                   }}
                 >
                   <option value="Under Review">Under Review</option>
                   <option value="Interview Scheduled">Interview Scheduled</option>
                   <option value="Assignment Given">Assignment Given</option>
+                  <option value="Selected">Selected</option>
+                  <option value="Rejected">Rejected</option>
                 </select>
               </div>
 
-              <h3 style={{ color: '#333333' }}>Resume Preview</h3>
+              <h3 style={{ color: '#FFFFFF', marginBottom: '15px' }}>Resume Preview</h3>
               <div style={{
-                border: '1px solid #ddd',
+                border: '1px solid #4B5563',
                 padding: '20px',
                 borderRadius: '5px',
-                backgroundColor: '#E5E5E5',
+                backgroundColor: '#2D3748',
                 height: '200px',
                 overflowY: 'auto',
-                color: '#333333'
+                color: '#FFFFFF'
               }}>
                 <p>Resume preview would be displayed here.</p>
                 <p>For actual implementation, you would need to integrate with a document viewer.</p>
@@ -440,7 +471,7 @@ const Employee = () => {
         zIndex: 1000
       }}>
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: '#1A202C',
           padding: '30px',
           borderRadius: '10px',
           width: '80%',
@@ -449,33 +480,73 @@ const Employee = () => {
           overflow: 'auto'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <h2 style={{ margin: 0, color: '#333333' }}>{job.title}</h2>
+            <h2 style={{ margin: 0, color: '#FFFFFF' }}>{job.title}</h2>
             <button 
               onClick={onClose}
               style={{
                 padding: '5px 10px',
-                backgroundColor: '#5C8999',
-                color: '#F5F5DC',
+                backgroundColor: '#EF4444',
+                color: '#FFFFFF',
                 border: 'none',
                 borderRadius: '5px',
-                cursor: 'pointer',
-                '&:hover': {
-                  backgroundColor: '#4A6F7C'
-                }
+                cursor: 'pointer'
               }}
             >
               Close
             </button>
           </div>
 
-          <TableContainer component={Paper}>
+          <TableContainer 
+            component={Paper} 
+            sx={{
+              backgroundColor: '#2D3748',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+              borderRadius: '8px',
+              '& .MuiTable-root': {
+                backgroundColor: 'transparent'
+              },
+              '& .MuiTableCell-root': {
+                borderColor: '#4A5568'
+              }
+            }}
+          >
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#0A1931' }}>
-                  <TableCell sx={{ color: '#FFFFFF', fontWeight: 'bold' }}>Name</TableCell>
-                  <TableCell sx={{ color: '#FFFFFF', fontWeight: 'bold' }}>Resume</TableCell>
-                  <TableCell sx={{ color: '#FFFFFF', fontWeight: 'bold' }}>Application Date</TableCell>
-                  <TableCell sx={{ color: '#FFFFFF', fontWeight: 'bold' }}>Status</TableCell>
+                <TableRow sx={{ 
+                  backgroundColor: '#374151'
+                }}>
+                  <TableCell sx={{ 
+                    color: '#FFFFFF', 
+                    fontWeight: 'bold',
+                    fontSize: '0.95rem',
+                    padding: '16px',
+                    textAlign: 'center',
+                    width: '25%'
+                  }}>Name</TableCell>
+                  <TableCell sx={{ 
+                    color: '#FFFFFF', 
+                    fontWeight: 'bold',
+                    fontSize: '0.95rem',
+                    padding: '16px',
+                    textAlign: 'center',
+                    width: '25%'
+                  }}>Resume</TableCell>
+                  <TableCell sx={{ 
+                    color: '#FFFFFF', 
+                    fontWeight: 'bold',
+                    fontSize: '0.95rem',
+                    padding: '16px',
+                    textAlign: 'center',
+                    width: '25%'
+                  }}>Application Date</TableCell>
+                  <TableCell sx={{ 
+                    color: '#FFFFFF', 
+                    fontWeight: 'bold',
+                    fontSize: '0.95rem',
+                    padding: '16px',
+                    textAlign: 'center',
+                    width: '25%'
+                  }}>Status</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -483,38 +554,70 @@ const Employee = () => {
                   <TableRow 
                     key={candidate.id}
                     sx={{ 
-                      backgroundColor: index % 2 === 0 ? '#FFFFFF' : '#E5E5E5',
-                      '&:hover': { backgroundColor: '#f5f5f5' },
-                      color: '#333333'
+                      backgroundColor: index % 2 === 0 ? '#2D3748' : '#374151',
+                      '&:hover': { 
+                        backgroundColor: '#4A5568',
+                        cursor: 'pointer' 
+                      }
                     }}
                   >
                     <TableCell 
-                      sx={{ 
-                        cursor: 'pointer',
-                        color: '#333333',
-                        '&:hover': { textDecoration: 'underline' }
-                      }}
                       onClick={() => setSelectedCandidate(candidate)}
+                      sx={{
+                        color: '#FFFFFF',
+                        borderColor: '#4A5568',
+                        padding: '16px',
+                        textAlign: 'center'
+                      }}
                     >
                       {candidate.name}
                     </TableCell>
-                    <TableCell>
+                    <TableCell
+                      sx={{
+                        color: '#FFFFFF',
+                        borderColor: '#4A5568',
+                        padding: '16px',
+                        textAlign: 'center'
+                      }}
+                    >
                       <Button
                         href={candidate.resumeLink}
                         target="_blank"
                         rel="noopener noreferrer"
                         sx={{ 
-                          color: '#1976d2',
+                          color: '#60A5FA',
                           '&:hover': {
-                            color: '#1565c0'
-                          }
+                            color: '#93C5FD',
+                            backgroundColor: 'rgba(96, 165, 250, 0.1)'
+                          },
+                          textTransform: 'none',
+                          fontWeight: 'medium',
+                          minWidth: '120px'
                         }}
                       >
                         View Resume
                       </Button>
                     </TableCell>
-                    <TableCell>{candidate.applicationDate}</TableCell>
-                    <TableCell>{candidate.status}</TableCell>
+                    <TableCell
+                      sx={{
+                        color: '#FFFFFF',
+                        borderColor: '#4A5568',
+                        padding: '16px',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {candidate.applicationDate}
+                    </TableCell>
+                    <TableCell
+                      sx={{
+                        color: '#FFFFFF',
+                        borderColor: '#4A5568',
+                        padding: '16px',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {candidate.status}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -535,7 +638,7 @@ const Employee = () => {
   return (
     <div style={{
       padding: '20px',
-      backgroundColor: '#0A1931',
+      backgroundColor: '#1A1F2B',
       minHeight: '100vh',
       borderRadius: '15px',
       display: 'flex',
@@ -551,7 +654,7 @@ const Employee = () => {
         {/* Header with animation */}
         <h1 style={{
           textAlign: 'center',
-          color: '#FFFFFF',
+          color: '#F3F4F6',
           marginBottom: '40px',
           ...(animate.header ? fadeIn : { opacity: 0 }),
         }}>
@@ -578,9 +681,9 @@ const Employee = () => {
             style={{
               padding: '10px',
               borderRadius: '5px',
-              border: '1px solid #FFFFFF',
+              border: '1px solid #4B5563',
               width: '200px',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: '#374151',
               color: '#FFFFFF',
               '::placeholder': { color: '#FFFFFF80' }
             }}
@@ -593,9 +696,9 @@ const Employee = () => {
             style={{
               padding: '10px',
               borderRadius: '5px',
-              border: '1px solid #FFFFFF',
+              border: '1px solid #4B5563',
               width: '300px',
-              backgroundColor: 'rgba(255, 255, 255, 0.1)',
+              backgroundColor: '#374151',
               color: '#FFFFFF',
               '::placeholder': { color: '#FFFFFF80' }
             }}
@@ -604,14 +707,14 @@ const Employee = () => {
             onClick={editingId ? handleUpdate : handleAdd}
             style={{
               padding: '10px 20px',
-              backgroundColor: '#5C8999',
-              color: '#F5F5DC',
+              backgroundColor: '#3B82F6',
+              color: '#FFFFFF',
               border: 'none',
               borderRadius: '5px',
               cursor: 'pointer',
               transition: 'background-color 0.3s',
               '&:hover': {
-                backgroundColor: '#4A6F7C'
+                backgroundColor: '#2563EB'
               }
             }}
           >
@@ -631,24 +734,35 @@ const Employee = () => {
             }}>
               <Card 
                 sx={{ 
-                  bgcolor: '#F5F5DC',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                  color: '#333333',
+                  bgcolor: '#0A2E3C',
+                  color: '#FFFFFF',
                   borderRadius: '15px',
                   overflow: 'hidden',
+                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)',
+                  transition: 'all 0.3s ease-in-out',
                   '&:hover': {
                     transform: 'translateY(-5px)',
-                    transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
-                    boxShadow: '0 8px 15px rgba(0, 0, 0, 0.2)'
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
                   },
-                  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out'
+                  position: 'relative',
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    borderRadius: '15px',
+                    boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+                    pointerEvents: 'none'
+                  }
                 }}
               >
                 <CardContent>
-                  <Typography variant="h5" component="div" gutterBottom sx={{ color: '#333333' }}>
+                  <Typography variant="h5" component="div" gutterBottom sx={{ color: '#FFFFFF' }}>
                     {job.title}
                   </Typography>
-                  <Typography variant="body2" sx={{ mb: 2, color: '#333333' }}>
+                  <Typography variant="body2" sx={{ mb: 2, color: '#FFFFFF' }}>
                     {job.description}
                   </Typography>
                   <Typography 
@@ -657,10 +771,10 @@ const Employee = () => {
                       display: 'flex', 
                       alignItems: 'center', 
                       gap: 1,
-                      color: '#333333'
+                      color: '#FFFFFF'
                     }}
                   >
-                    <PeopleIcon sx={{ fontSize: 20 }} />
+                    <PeopleIcon sx={{ fontSize: 20, color: '#FFFFFF' }} />
                     Candidates Applied: {job.candidates}
                   </Typography>
                 </CardContent>
@@ -673,10 +787,12 @@ const Employee = () => {
                       handleEdit(job);
                     }}
                     sx={{
-                      bgcolor: '#006400',
-                      color: '#F5F5DC',
+                      bgcolor: '#4A6670',
+                      color: '#FFFFFF',
+                      borderRadius: '50px',
+                      padding: '8px 16px',
                       '&:hover': { 
-                        bgcolor: '#008000',
+                        bgcolor: '#5A7680',
                         transition: 'background-color 0.3s'
                       }
                     }}
@@ -690,9 +806,11 @@ const Employee = () => {
                       handleDelete(job.id);
                     }}
                     sx={{
-                      bgcolor: '#800000',
-                      color: '#F5F5DC',
-                      '&:hover': { bgcolor: '#A00000' }
+                      bgcolor: '#8B4543',
+                      color: '#FFFFFF',
+                      borderRadius: '50px',
+                      padding: '8px 16px',
+                      '&:hover': { bgcolor: '#9B5553' }
                     }}
                   >
                     Delete
@@ -701,10 +819,12 @@ const Employee = () => {
                     startIcon={<VisibilityIcon />}
                     onClick={() => handleJobClick(job)}
                     sx={{
-                      bgcolor: '#1976d2',
-                      color: '#F5F5DC',
+                      bgcolor: '#3D5A80',
+                      color: '#FFFFFF',
+                      borderRadius: '50px',
+                      padding: '8px 16px',
                       '&:hover': { 
-                        bgcolor: '#1565c0',
+                        bgcolor: '#4D6A90',
                         transition: 'background-color 0.3s'
                       },
                       minWidth: '100px'
@@ -731,6 +851,7 @@ const Employee = () => {
           <CandidateModal
             candidate={selectedCandidate}
             onClose={() => setSelectedCandidate(null)}
+            onStatusUpdate={handleStatusUpdate}
           />
         )}
 
