@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
+import { Box, Typography, Paper, Stack, Chip, TextField, IconButton } from '@mui/material';
 
 const AddQuestion = ({ 
   isOpen, 
@@ -106,72 +107,83 @@ const AddQuestion = ({
         </div>
 
         {questions.map((question, index) => (
-          <div key={index} style={{
-            backgroundColor: '#374151',
-            padding: '15px',
-            marginBottom: '15px',
-            borderRadius: '8px',
+          <Paper key={index} sx={{
+            bgcolor: '#374151',
+            p: 2,
+            mb: 2,
+            borderRadius: 1,
+            color: 'white'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', width: '90%' }}>
-                <span style={{ 
-                  color: '#FFFFFF', 
-                  marginRight: '10px',
-                  minWidth: '30px'
-                }}>
-                  Q{index + 1}.
-                </span>
-                <input
+            <Stack spacing={2}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                <Chip 
+                  label={`Q${index + 1}`}
+                  sx={{ 
+                    bgcolor: '#60A5FA',
+                    color: 'white',
+                    fontWeight: 'bold'
+                  }} 
+                />
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
                   value={question.text}
                   onChange={(e) => updateQuestion(index, 'text', e.target.value)}
                   placeholder="Enter question text"
-                  style={{
-                    width: '100%',
-                    padding: '8px',
-                    backgroundColor: '#FFFFFF',
-                    color: '#000000',
-                    border: '1px solid #4B5563',
-                    borderRadius: '4px'
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      color: 'white',
+                      bgcolor: '#1F2937'
+                    }
                   }}
                 />
-              </div>
-              <button
-                onClick={() => deleteQuestion(index)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#FF4444',
-                  cursor: 'pointer'
-                }}
-              >
-                <DeleteIcon />
-              </button>
-            </div>
+              </Box>
 
-            <div>
-              {question.options.map((option, optIndex) => (
-                <div key={optIndex} style={{ 
-                  marginBottom: '8px',
-                  marginLeft: '40px',
-                  display: 'flex'
-                }}>
-                  <input
-                    value={option}
-                    onChange={(e) => updateQuestion(index, 'options', e.target.value, optIndex)}
-                    placeholder={`Option ${optIndex + 1}`}
-                    style={{
-                      width: '80%',
-                      padding: '6px',
-                      backgroundColor: '#FFFFFF',
-                      color: '#000000',
-                      border: '1px solid #4B5563',
-                      borderRadius: '4px'
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
+              <Stack spacing={1} sx={{ pl: 4 }}>
+                {question.options.map((option, optIndex) => (
+                  <Box key={optIndex} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <Chip
+                      label={String.fromCharCode(65 + optIndex)}
+                      sx={{
+                        bgcolor: '#1F2937',
+                        color: '#9CA3AF',
+                        minWidth: 32,
+                        '& .MuiChip-label': {
+                          padding: '0 8px'
+                        }
+                      }}
+                    />
+                    <TextField
+                      fullWidth
+                      value={option}
+                      onChange={(e) => updateQuestion(index, 'options', e.target.value, optIndex)}
+                      placeholder={`Option ${optIndex + 1}`}
+                      sx={{
+                        '& .MuiInputBase-root': {
+                          color: 'white',
+                          bgcolor: '#1F2937'
+                        },
+                        '& .MuiOutlinedInput-input': {
+                          padding: '8px 14px'
+                        }
+                      }}
+                      size="small"
+                    />
+                  </Box>
+                ))}
+              </Stack>
+
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                <IconButton
+                  onClick={() => deleteQuestion(index)}
+                  sx={{ color: '#EF4444' }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Stack>
+          </Paper>
         ))}
 
         <button

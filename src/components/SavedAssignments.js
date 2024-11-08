@@ -126,7 +126,7 @@ const SavedAssignments = ({ isOpen, onClose, assignments = [], onUpdateAssignmen
           alignItems: 'center', 
           mb: 2 
         }}>
-          <Typography variant="h5" color="white">Saved Assignments</Typography>
+          <Typography variant="h5" color="white">Saved Assessment</Typography>
           <IconButton onClick={onClose} sx={{ color: 'white' }}>
             <CloseIcon />
           </IconButton>
