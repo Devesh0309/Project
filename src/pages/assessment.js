@@ -1,334 +1,307 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import useLocalStorage from '../hooks/useLocalStorage';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import SaveIcon from '@mui/icons-material/Save';
+import AddQuestion from '../components/AddQuestion';
+import SavedAssignments from '../components/SavedAssignments';
 
 const Assessment = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [selectedJob, setSelectedJob] = useState('');
-  const [questions, setQuestions] = useLocalStorage('assessment-questions', []);
+  const [animate, setAnimate] = useState(false);
+  const [showError, setShowError] = useState(false);
   const [jobs] = useLocalStorage('jobs', [
     { id: 1, title: 'Software Engineer', isRecent: true },
     { id: 2, title: 'Product Manager', isRecent: false }
   ]);
-  const [currentQuestion, setCurrentQuestion] = useState({
-    question: '',
-    options: ['', '', '', ''],
-    correctAnswer: 0
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingAssessmentId, setEditingAssessmentId] = useState(null);
+  const [assessments, setAssessments] = useLocalStorage('assessments', {});
+  const [showSavedAssignments, setShowSavedAssignments] = useState(false);
 
-  // Debug log to verify jobs are being loaded
   useEffect(() => {
-    console.log('Current jobs in Assessment:', jobs);
-  }, [jobs]);
+    setAnimate(true);
+  }, []);
 
-  const handleAddQuestion = () => {
-    if (currentQuestion.question && currentQuestion.options.every(opt => opt !== '')) {
-      setQuestions([...questions, { ...currentQuestion, id: Date.now() }]);
-      setCurrentQuestion({
-        question: '',
-        options: ['', '', '', ''],
-        correctAnswer: 0
-      });
+  const handleActionClick = (action) => {
+    if (!selectedJob) {
+      setShowError(true);
+      setTimeout(() => setShowError(false), 3000);
+      return;
+    }
+
+    if (action === 'new') {
+      setEditingAssessmentId(null);
+      setIsModalOpen(true);
+    } else if (action === 'saved') {
+      setShowSavedAssignments(true);
     }
   };
 
-  const handleEditQuestion = (questionId) => {
-    const question = questions.find(q => q.id === questionId);
-    setCurrentQuestion(question);
-    setQuestions(questions.filter(q => q.id !== questionId));
-  };
+  const handleSaveAssessment = (questions) => {
+    const newAssessments = { ...assessments };
+    if (!newAssessments[selectedJob]) {
+      newAssessments[selectedJob] = [];
+    }
 
-  const handleDeleteQuestion = (questionId) => {
-    setQuestions(questions.filter(q => q.id !== questionId));
+    if (editingAssessmentId !== null) {
+      newAssessments[selectedJob] = newAssessments[selectedJob].map(assessment =>
+        assessment.id === editingAssessmentId
+          ? { ...assessment, questions }
+          : assessment
+      );
+    } else {
+      newAssessments[selectedJob].push({
+        id: Date.now(),
+        questions,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    setAssessments(newAssessments);
+    setIsModalOpen(false);
+    setEditingAssessmentId(null);
   };
 
   return (
     <div style={{
       padding: '20px',
-      backgroundColor: '#1A202C',
-      minHeight: '100vh'
+      backgroundColor: '#1A1F2B',
+      minHeight: '100vh',
+      position: 'relative'
     }}>
-      {/* Header Section */}
+      {/* Create Job Button - Top Left */}
+      <button
+        onClick={() => navigate('/employee')}
+        style={{
+          position: 'absolute',
+          top: '20px',
+          left: '20px',
+          padding: '12px 24px',
+          backgroundColor: '#5C8999',
+          color: '#FFFFFF',
+          border: 'none',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          fontSize: '1.1rem',
+          transition: 'all 0.3s ease',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+          '&:hover': {
+            backgroundColor: '#4A6F7C',
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.2)'
+          }
+        }}
+      >
+        Create Job
+      </button>
+
+      {/* Main Content */}
       <div style={{
         display: 'flex',
-        flexDirection: 'column',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: '40px',
-        position: 'relative',
-        width: '100%'
+        minHeight: '100vh'
       }}>
-        <h1 style={{ 
-          color: '#FFFFFF',
-          fontSize: '2.5rem',
-          marginBottom: '30px',
-          textAlign: 'center'
+        <div style={{
+          backgroundColor: '#0A2E3C',
+          padding: '40px',
+          borderRadius: '15px',
+          width: '600px',
+          opacity: animate ? 1 : 0,
+          transform: animate ? 'translateY(0)' : 'translateY(-20px)',
+          transition: 'all 0.6s ease-in-out',
+          boxShadow: `
+            0 4px 6px rgba(0, 0, 0, 0.1),
+            0 1px 3px rgba(0, 0, 0, 0.08),
+            0 10px 20px rgba(0, 0, 0, 0.15),
+            0 3px 6px rgba(255, 255, 255, 0.05) inset
+          `,
+          border: '1px solid rgba(255, 255, 255, 0.1)'
         }}>
-          Create Assessment
-        </h1>
-        
-        <button
-          onClick={() => navigate('/employee')}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#3B82F6',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            position: 'absolute',
-            right: '20px',
-            top: '10px',
-            transition: 'background-color 0.3s',
-            '&:hover': {
-              backgroundColor: '#2563EB'
-            }
-          }}
-        >
-          Back to Jobs
-        </button>
+          {/* Header */}
+          <div style={{
+            marginBottom: '30px',
+            textAlign: 'center'
+          }}>
+            <h1 style={{ 
+              color: '#FFFFFF',
+              fontSize: '2.5rem',
+              marginBottom: '10px',
+              textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
+            }}>
+              Assessment Setup
+            </h1>
+            <p style={{
+              color: '#FFFFFF',
+              fontSize: '1.1rem',
+              opacity: 0.8
+            }}>
+              Select a job position to begin
+            </p>
+          </div>
 
-        {/* Job Selection Dropdown */}
-        <select
-          value={selectedJob}
-          onChange={(e) => setSelectedJob(e.target.value)}
-          style={{
-            padding: '12px',
-            borderRadius: '5px',
-            width: '400px',
-            fontSize: '1.1rem',
-            border: '1px solid #4B5563',
-            backgroundColor: '#374151',
-            color: '#FFFFFF',
-            cursor: 'pointer'
-          }}
-        >
-          <option value="">Select a Job Position</option>
-          
-          {/* Recently Added Jobs Group */}
-          {jobs.filter(job => job.isRecent).length > 0 && (
-            <optgroup 
-              label="Recently Added Jobs"
+          {/* Error Message */}
+          {showError && (
+            <div style={{
+              color: '#FF4444',
+              textAlign: 'center',
+              marginBottom: '20px',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              animation: 'fadeIn 0.3s ease-in'
+            }}>
+              Please select a job position first
+            </div>
+          )}
+
+          {/* Job Selection Dropdown */}
+          <div style={{
+            marginBottom: '30px'
+          }}>
+            <select
+              value={selectedJob}
+              onChange={(e) => setSelectedJob(e.target.value)}
               style={{
-                backgroundColor: '#2D3748',
-                color: '#FFFFFF'
+                width: '100%',
+                padding: '15px',
+                backgroundColor: '#374151',
+                color: '#FFFFFF',
+                border: '1px solid #4B5563',
+                borderRadius: '8px',
+                fontSize: '1.1rem',
+                outline: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
               }}
             >
-              {jobs
-                .filter(job => job.isRecent)
-                .map(job => (
-                  <option 
-                    key={`recent-${job.id}`} 
-                    value={job.id}
-                    style={{
-                      backgroundColor: '#374151',
-                      color: '#FFFFFF'
-                    }}
-                  >
-                    {job.title}
-                  </option>
-                ))
-              }
-            </optgroup>
-          )}
-          
-          {/* All Jobs Group */}
-          <optgroup 
-            label="All Jobs"
-            style={{
-              backgroundColor: '#2D3748',
-              color: '#FFFFFF'
-            }}
-          >
-            {jobs.map(job => (
-              <option 
-                key={`all-${job.id}`} 
-                value={job.id}
-                style={{
-                  backgroundColor: '#374151',
-                  color: '#FFFFFF'
-                }}
-              >
-                {job.title}
-              </option>
-            ))}
-          </optgroup>
-        </select>
-      </div>
-
-      {selectedJob && (
-        <div style={{
-          maxWidth: '800px',
-          margin: '0 auto'
-        }}>
-          {/* Question Creation Form */}
-          <div style={{
-            backgroundColor: '#2D3748',
-            padding: '30px',
-            borderRadius: '15px',
-            marginBottom: '30px',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}>
-            <h2 style={{ 
-              marginBottom: '20px',
-              color: '#FFFFFF'
-            }}>
-              Add New Question
-            </h2>
-            <div>
-              <input
-                type="text"
-                placeholder="Enter your question here"
-                value={currentQuestion.question}
-                onChange={(e) => setCurrentQuestion({
-                  ...currentQuestion,
-                  question: e.target.value
-                })}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  marginBottom: '20px',
-                  borderRadius: '5px',
-                  border: '1px solid #4B5563',
-                  backgroundColor: '#374151',
-                  color: '#FFFFFF',
-                  fontSize: '1rem'
-                }}
-              />
-
-              {currentQuestion.options.map((option, index) => (
-                <div key={index} style={{ 
-                  marginBottom: '15px', 
-                  display: 'flex', 
-                  gap: '10px'
-                }}>
-                  <input
-                    type="text"
-                    placeholder={`Option ${index + 1}`}
-                    value={option}
-                    onChange={(e) => {
-                      const newOptions = [...currentQuestion.options];
-                      newOptions[index] = e.target.value;
-                      setCurrentQuestion({
-                        ...currentQuestion,
-                        options: newOptions
-                      });
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: '10px',
-                      borderRadius: '5px',
-                      border: '1px solid #4B5563',
-                      backgroundColor: '#374151',
-                      color: '#FFFFFF'
-                    }}
-                  />
-                  <input
-                    type="radio"
-                    name="correctAnswer"
-                    checked={currentQuestion.correctAnswer === index}
-                    onChange={() => setCurrentQuestion({
-                      ...currentQuestion,
-                      correctAnswer: index
-                    })}
-                  />
-                </div>
+              <option value="">Select a job position</option>
+              {jobs.map((job) => (
+                <option key={job.id} value={job.id}>
+                  {job.title}
+                </option>
               ))}
-              <button
-                onClick={handleAddQuestion}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#3B82F6',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  marginTop: '10px',
-                  transition: 'background-color 0.3s',
-                  '&:hover': {
-                    backgroundColor: '#2563EB'
-                  }
-                }}
-              >
-                Add Question
-              </button>
-            </div>
+            </select>
           </div>
 
-          {/* Questions List */}
-          <div>
-            <h2 style={{ color: '#FFFFFF', marginBottom: '20px' }}>Questions List</h2>
-            {questions.map((question, index) => (
-              <div
-                key={question.id}
-                style={{
-                  backgroundColor: '#2D3748',
-                  padding: '20px',
-                  borderRadius: '15px',
-                  marginBottom: '10px',
-                  color: '#FFFFFF'
-                }}
-              >
-                <h3>Question {index + 1}</h3>
-                <p>{question.question}</p>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  {question.options.map((option, optIndex) => (
-                    <li
-                      key={optIndex}
-                      style={{
-                        padding: '5px',
-                        backgroundColor: '#374151',
-                        margin: '5px 0',
-                        borderRadius: '5px'
-                      }}
-                    >
-                      {option}
-                    </li>
-                  ))}
-                </ul>
-                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                  <button
-                    onClick={() => handleEditQuestion(question.id)}
-                    style={{
-                      padding: '5px 10px',
-                      backgroundColor: '#3B82F6',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.3s',
-                      '&:hover': {
-                        backgroundColor: '#2563EB'
-                      }
-                    }}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteQuestion(question.id)}
-                    style={{
-                      padding: '5px 10px',
-                      backgroundColor: '#EF4444',
-                      color: '#FFFFFF',
-                      border: 'none',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                      transition: 'background-color 0.3s',
-                      '&:hover': {
-                        backgroundColor: '#DC2626'
-                      }
-                    }}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '20px',
+            justifyContent: 'center'
+          }}>
+            <button
+              onClick={() => handleActionClick('new')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: selectedJob ? '#4CAF50' : '#4A5568',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: selectedJob ? 'pointer' : 'not-allowed',
+                fontSize: '1.1rem',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+              onMouseOver={(e) => {
+                if (selectedJob) {
+                  e.currentTarget.style.backgroundColor = '#45a049';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.2)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (selectedJob) {
+                  e.currentTarget.style.backgroundColor = '#4CAF50';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                }
+              }}
+            >
+              <AddCircleOutlineIcon style={{ fontSize: '1.2rem' }} />
+              New Assignment
+            </button>
+            <button
+              onClick={() => handleActionClick('saved')}
+              style={{
+                padding: '12px 24px',
+                backgroundColor: selectedJob ? '#5C8999' : '#4A5568',
+                color: '#FFFFFF',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: selectedJob ? 'pointer' : 'not-allowed',
+                fontSize: '1.1rem',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}
+              onMouseOver={(e) => {
+                if (selectedJob) {
+                  e.currentTarget.style.backgroundColor = '#4A6F7C';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.2)';
+                }
+              }}
+              onMouseOut={(e) => {
+                if (selectedJob) {
+                  e.currentTarget.style.backgroundColor = '#5C8999';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+                }
+              }}
+            >
+              <SaveIcon style={{ fontSize: '1.2rem' }} />
+              Saved Assignments
+            </button>
           </div>
         </div>
-      )}
+      </div>
+
+      <AddQuestion
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveAssessment}
+        editingAssessmentId={editingAssessmentId}
+        initialQuestions={editingAssessmentId 
+          ? assessments[selectedJob]?.find(a => a.id === editingAssessmentId)?.questions || []
+          : []
+        }
+      />
+
+      <SavedAssignments
+        isOpen={showSavedAssignments}
+        onClose={() => setShowSavedAssignments(false)}
+        assignments={assessments[selectedJob] || []}
+      />
     </div>
   );
 };
+
+// Add CSS animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+`;
+document.head.appendChild(style);
 
 export default Assessment;
