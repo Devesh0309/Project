@@ -24,6 +24,21 @@ const fadeIn = {
   animation: 'fadeIn 0.5s ease-in forwards'
 };
 
+// Add this style at the top of your file with other styles
+const modalOverlay = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  backdropFilter: 'blur(5px)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  zIndex: 1000
+};
+
 const EditModal = ({ job, onClose, onUpdate }) => {
   const [editedJob, setEditedJob] = useState(job);
 
@@ -229,32 +244,16 @@ const Employee = () => {
 
   // Candidate Details Modal
   const CandidateModal = ({ candidate, onClose, onStatusUpdate }) => {
-    const [status, setStatus] = useState(candidate?.status || 'Under Review');
-
-    console.log('Candidate data in modal:', candidate);
-
-    const handleStatusChange = (newStatus) => {
-      setStatus(newStatus);
+    const handleStatusChange = (e) => {
+      const newStatus = e.target.value;
+      candidate.status = newStatus;
       onStatusUpdate(candidate.id, newStatus);
     };
 
-    if (!candidate) {
-      return null;
-    }
+    if (!candidate) return null;
 
     return (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000
-      }}>
+      <div style={modalOverlay}>
         <div style={{
           backgroundColor: '#2D3748',
           padding: '30px',
@@ -262,7 +261,9 @@ const Employee = () => {
           width: '80%',
           maxWidth: '800px',
           maxHeight: '90vh',
-          overflow: 'auto'
+          overflow: 'auto',
+          position: 'relative',
+          zIndex: 1001  // Ensure modal content is above the blur
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
             <h2 style={{ margin: 0, color: '#FFFFFF' }}>Candidate Details</h2>
@@ -337,8 +338,8 @@ const Employee = () => {
               <h3 style={{ color: '#FFFFFF', marginBottom: '15px' }}>Application Status</h3>
               <div style={{ marginBottom: '20px' }}>
                 <select
-                  value={status}
-                  onChange={(e) => handleStatusChange(e.target.value)}
+                  value={candidate.status}
+                  onChange={handleStatusChange}
                   style={{
                     padding: '8px',
                     borderRadius: '5px',
