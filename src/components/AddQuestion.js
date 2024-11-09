@@ -30,12 +30,12 @@ const AddQuestion = ({
     setQuestions(prev => prev.map((q, i) => {
       if (i !== index) return q;
       if (optionIndex !== null) {
-        // Update specific option
+        
         const newOptions = [...q.options];
         newOptions[optionIndex] = value;
         return { ...q, options: newOptions };
       }
-      // Update question text
+      
       return { ...q, [field]: value };
     }));
   };
@@ -48,7 +48,7 @@ const AddQuestion = ({
     if (validQuestions.length > 0) {
       const formattedQuestions = validQuestions.map(q => ({
         ...q,
-        correctAnswer: 0 // Default to first option
+        correctAnswer: 0 
       }));
       
       onSave(formattedQuestions);
