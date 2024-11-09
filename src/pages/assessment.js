@@ -71,7 +71,7 @@ const Assessment = () => {
       minHeight: '100vh',
       position: 'relative'
     }}>
-      {/* Create Job Button - Top Left */}
+      
       <button
         onClick={() => navigate('/employee')}
         style={{
@@ -288,7 +288,7 @@ const Assessment = () => {
   );
 };
 
-// Add CSS animation
+
 const style = document.createElement('style');
 style.textContent = `
   @keyframes fadeIn {

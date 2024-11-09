@@ -18,13 +18,11 @@ import {
 } from '@mui/material';
 import { Edit as EditIcon, Delete as DeleteIcon, Visibility as VisibilityIcon, PeopleAlt as PeopleIcon } from '@mui/icons-material';
 
-// Add these CSS keyframes at the top of your component
 const fadeIn = {
   opacity: 0,
   animation: 'fadeIn 0.5s ease-in forwards'
 };
 
-// Add this style at the top of your file with other styles
 const modalOverlay = {
   position: 'fixed',
   top: 0,
@@ -132,25 +130,21 @@ const EditModal = ({ job, onClose, onUpdate }) => {
 const Employee = () => {
   const navigate = useNavigate();
 
-  // Add this useEffect at the top of your component
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []); // Empty dependency array means this runs once when component mounts
+  }, []);
 
-  // Function to generate random date within last 30 days
   const getRandomDate = () => {
     const date = new Date();
     date.setDate(date.getDate() - Math.floor(Math.random() * 30));
     return date.toLocaleDateString();
   };
 
-  // Function to generate random status
   const getRandomStatus = () => {
     const statuses = ['Under Review', 'Interview Scheduled', 'Assignment Given'];
     return statuses[Math.floor(Math.random() * statuses.length)];
   };
 
-  // Function to generate random candidates
   const generateCandidates = (count) => {
     return Array.from({ length: count }, (_, index) => ({
       id: index + 1,
@@ -168,7 +162,6 @@ const Employee = () => {
 
   const [selectedJob, setSelectedJob] = useState(null);
 
-  // Modify the initial jobs data
   const initialJobs = [
     { 
       id: 1, 
@@ -193,7 +186,6 @@ const Employee = () => {
     }
   ];
 
-  // Modify the useLocalStorage hook usage
   const [jobs, setJobs] = useLocalStorage('jobs', initialJobs);
 
   const [newJob, setNewJob] = useState({ title: '', description: '' });
@@ -201,7 +193,6 @@ const Employee = () => {
 
   const [selectedCandidate, setSelectedCandidate] = useState(null);
 
-  // Update the handleStatusUpdate function
   const handleStatusUpdate = (candidateId, newStatus) => {
     setJobs(prevJobs => {
       const updatedJobs = prevJobs.map(job => {
@@ -222,12 +213,10 @@ const Employee = () => {
         return job;
       });
       
-      // Update localStorage
       localStorage.setItem('jobs', JSON.stringify(updatedJobs));
       return updatedJobs;
     });
 
-    // Update selectedJob
     setSelectedJob(prev => ({
       ...prev,
       candidateList: prev.candidateList.map(candidate => {
@@ -242,7 +231,6 @@ const Employee = () => {
     }));
   };
 
-  // Candidate Details Modal
   const CandidateModal = ({ candidate, onClose, onStatusUpdate }) => {
     const handleStatusChange = (e) => {
       const newStatus = e.target.value;
@@ -263,7 +251,7 @@ const Employee = () => {
           maxHeight: '90vh',
           overflow: 'auto',
           position: 'relative',
-          zIndex: 1001  // Ensure modal content is above the blur
+          zIndex: 1001
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
             <h2 style={{ margin: 0, color: '#FFFFFF' }}>Candidate Details</h2>
@@ -283,7 +271,6 @@ const Employee = () => {
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-            {/* Personal Information Section */}
             <div style={{ 
               backgroundColor: '#374151',
               padding: '20px',
@@ -328,7 +315,6 @@ const Employee = () => {
               </div>
             </div>
 
-            {/* Application Status Section */}
             <div style={{ 
               backgroundColor: '#374151',
               padding: '20px',
@@ -377,12 +363,10 @@ const Employee = () => {
     );
   };
 
-  // Handle job click
   const handleJobClick = (job) => {
     setSelectedJob(selectedJob?.id === job.id ? null : job);
   };
 
-  // Add new job
   const handleAdd = () => {
     if (newJob.title && newJob.description) {
       const newJobWithMeta = { 
@@ -397,7 +381,6 @@ const Employee = () => {
       const updatedJobs = [...jobs, newJobWithMeta];
       setJobs(updatedJobs);
       
-      // Update localStorage and dispatch event
       localStorage.setItem('jobs', JSON.stringify(updatedJobs));
       window.dispatchEvent(new Event('storage'));
       
@@ -405,17 +388,15 @@ const Employee = () => {
     }
   };
 
-  // Delete job
   const handleDelete = (id) => {
     setJobs(jobs.filter(job => job.id !== id));
   };
-  // Start editing job
+
   const startEditing = (job) => {
     setEditingId(job.id);
     setNewJob({ title: job.title, description: job.description });
   };
 
-  // Save edits with new random candidates
   const handleUpdate = (updatedDetails) => {
     setJobs(jobs.map(job => 
       job.id === editingJob.id 
@@ -429,7 +410,6 @@ const Employee = () => {
     setEditingJob(null);
   };
 
-  // Add a cleanup effect to remove the "recent" flag after 24 hours
   useEffect(() => {
     const cleanup = setInterval(() => {
       const storedJobs = JSON.parse(localStorage.getItem('jobs') || '[]');
@@ -443,17 +423,15 @@ const Employee = () => {
 
       localStorage.setItem('jobs', JSON.stringify(updatedJobs));
       setJobs(updatedJobs);
-    }, 3600000); // Check every hour
+    }, 3600000);
 
     return () => clearInterval(cleanup);
   }, []);
 
-  // Update localStorage whenever jobs change
   useEffect(() => {
     localStorage.setItem('jobs', JSON.stringify(jobs));
   }, [jobs]);
 
-  // Add this useEffect to ensure data persistence
   useEffect(() => {
     const storedJobs = localStorage.getItem('jobs');
     if (!storedJobs) {
@@ -462,7 +440,6 @@ const Employee = () => {
     } else {
       try {
         const parsedJobs = JSON.parse(storedJobs);
-        // Ensure each job has candidateList with all required fields
         const validatedJobs = parsedJobs.map(job => ({
           ...job,
           candidateList: job.candidateList?.map(candidate => ({
@@ -494,16 +471,13 @@ const Employee = () => {
     button: false
   });
 
-  // Add animation trigger effect
   useEffect(() => {
-    // Stagger the animations
     setTimeout(() => setAnimate(prev => ({ ...prev, header: true })), 100);
     setTimeout(() => setAnimate(prev => ({ ...prev, form: true })), 300);
     setTimeout(() => setAnimate(prev => ({ ...prev, table: true })), 500);
     setTimeout(() => setAnimate(prev => ({ ...prev, button: true })), 700);
   }, []);
 
-  // Add this new Modal component
   const JobModal = ({ job, onClose }) => {
     return (
       <div style={{
@@ -681,7 +655,6 @@ const Employee = () => {
 
   const [editingJob, setEditingJob] = useState(null);
 
-  // Update handleEdit function
   const handleEdit = (job) => {
     setEditingJob(job);
   };
@@ -702,7 +675,6 @@ const Employee = () => {
         paddingTop: '40px',
         paddingBottom: '40px'
       }}>
-        {/* Header with animation */}
         <h1 style={{
           textAlign: 'center',
           color: '#F3F4F6',
@@ -712,7 +684,6 @@ const Employee = () => {
           JOB POSTINGS MANAGEMENT
         </h1>
 
-        {/* Form with animation */}
         <div style={{
           marginBottom: '30px',
           display: 'flex',
@@ -773,7 +744,6 @@ const Employee = () => {
           </button>
         </div>
 
-        {/* Cards with animation */}
         <Grid container spacing={3} sx={{ 
           mt: 2,
           ...(animate.table ? fadeIn : { opacity: 0 })
@@ -889,7 +859,6 @@ const Employee = () => {
           ))}
         </Grid>
 
-        {/* Job Modal */}
         {selectedJob && (
           <JobModal 
             job={selectedJob}
@@ -897,7 +866,6 @@ const Employee = () => {
           />
         )}
 
-        {/* Candidate Modal */}
         {selectedCandidate && (
           <CandidateModal
             candidate={selectedCandidate}
@@ -906,7 +874,6 @@ const Employee = () => {
           />
         )}
 
-        {/* Navigation Buttons Container */}
         <div style={{ 
           display: 'flex', 
           justifyContent: 'space-between',
@@ -914,7 +881,6 @@ const Employee = () => {
           marginTop: '40px',
           ...(animate.button ? fadeIn : { opacity: 0 })
         }}>
-          {/* Home Button */}
           <button
             onClick={() => navigate('/')}
             style={{
@@ -934,7 +900,6 @@ const Employee = () => {
             Home
           </button>
 
-          {/* Create Assessment Button */}
           <button
             onClick={() => navigate('/assessment')}
             style={{
@@ -955,7 +920,6 @@ const Employee = () => {
           </button>
         </div>
 
-        {/* Add EditModal */}
         {editingJob && (
           <EditModal
             job={editingJob}
@@ -968,7 +932,6 @@ const Employee = () => {
   );
 };
 
-// Add this style to your document's <head> or CSS file
 const style = document.createElement('style');
 style.textContent = `
   @keyframes fadeIn {

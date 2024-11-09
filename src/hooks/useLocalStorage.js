@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 const useLocalStorage = (key, initialValue) => {
-  // Initialize state with a function to avoid unnecessary computation
+  
   const [storedValue, setStoredValue] = useState(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -12,7 +12,7 @@ const useLocalStorage = (key, initialValue) => {
     }
   });
 
-  // Update localStorage when the state changes
+  
   useEffect(() => {
     try {
       window.localStorage.setItem(key, JSON.stringify(storedValue));
